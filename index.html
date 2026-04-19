@@ -6,46 +6,47 @@
     <title>Ялта Тур Про</title>
     <style>
         body { background: #1a1a1a; color: #d4af37; text-align: center; font-family: 'Georgia', serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { border: 2px solid #d4af37; padding: 30px; border-radius: 20px; width: 90%; max-width: 360px; }
-        h1 { font-size: 24px; word-spacing: 5px; margin-bottom: 5px; }
-        .subtitle { font-size: 11px; letter-spacing: 2px; color: #aaa; text-transform: uppercase; margin-bottom: 25px; }
+        .card { border: 2px solid #d4af37; padding: 30px; border-radius: 20px; width: 90%; max-width: 360px; box-shadow: 0 0 25px rgba(212, 175, 55, 0.2); }
+        
+        /* Исправляем слипание слов */
+        h1 { font-size: 26px; margin: 0 0 10px 0; word-spacing: 8px; line-height: 1.2; }
+        .subtitle { font-size: 11px; letter-spacing: 3px; color: #aaa; text-transform: uppercase; margin-bottom: 30px; display: block; }
         
         /* Кнопки */
-        .btn { background: #d4af37; color: #1a1a1a; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 10px auto; display: inline-flex; align-items: center; justify-content: center; }
-        .btn-main { width: 100px; height: 100px; font-size: 40px; }
-        .btn-restart { padding: 12px 24px; font-size: 14px; background: none; border: 1px solid #d4af37; color: #d4af37; width: 80%; }
+        .btn { background: #d4af37; color: #1a1a1a; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 10px auto; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+        .btn-main { width: 90px; height: 90px; font-size: 35px; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+        .btn-restart { padding: 12px 24px; font-size: 14px; background: none; border: 1px solid #d4af37; color: #d4af37; width: 85%; margin-top: 20px; }
         
-        /* Кнопка ручного пуска - теперь она яркая и большая */
-        .manual-zone { border-top: 1px solid #333; margin-top: 20px; padding-top: 20px; }
-        .btn-manual { background: #d4af37; color: #1a1a1a; padding: 15px 25px; border-radius: 10px; font-size: 16px; font-weight: bold; border: none; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(212,175,55,0.3); }
+        .manual-zone { border-top: 1px solid #333; margin-top: 25px; padding-top: 25px; }
+        .btn-manual { background: #d4af37; color: #1a1a1a; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; border: none; cursor: pointer; width: 100%; -webkit-tap-highlight-color: transparent; }
+        .btn:active, .btn-manual:active { transform: scale(0.95); background: #fff; }
 
-        #status { font-size: 16px; margin: 15px 0; min-height: 45px; }
-        #distance { font-size: 12px; color: #888; }
+        #status { font-size: 17px; margin: 20px 0; min-height: 50px; font-weight: 500; color: #f4e1c1; }
+        #distance { font-size: 12px; color: #888; letter-spacing: 1px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Вперёд в прошлое</h1>
-        <p class="subtitle">Ялтинский променад</p>
-        <div id="status">Нажмите ▶ для активации</div>
+        <span class="subtitle">Ялтинский променад</span>
+        
+        <div id="status">Нажмите ▶ для запуска экскурсии</div>
         
         <button id="init-btn" class="btn btn-main" onclick="initApp()">▶</button>
 
-        <div id="restart-zone" class="hidden">
-            <button class="btn btn-restart" onclick="restartAudio()">🔄 Начать сначала</button>
-        </div>
-
-        <div id="distance">Ожидание...</div>
+        <div id="distance">Ожидание GPS...</div>
 
         <div id="manual-zone" class="manual-zone hidden">
-            <button id="force-btn" class="btn-manual" onclick="playAudio()">ВКЛЮЧИТЬ ЗВУК ВРУЧНУЮ</button>
+            <button class="btn-manual" onclick="playAudio()">ВКЛЮЧИТЬ ЗВУК ВРУЧНУЮ</button>
+            
+            <div id="restart-zone" class="hidden">
+                <button class="btn btn-restart" onclick="restartAudio()">🔄 Слушать с начала</button>
+            </div>
         </div>
     </div>
 
-    <audio id="track" preload="auto">
-        <source src="audio/point1.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="track" src="point1.mp3" preload="auto"></audio>
 
     <script>
         const audio = document.getElementById('track');
@@ -56,7 +57,7 @@
         const initBtn = document.getElementById('init-btn');
 
         function initApp() {
-            // Критически важно для мобильных: первый «пустой» запуск
+            // Разблокировка звука для мобильных систем
             audio.play().then(() => { 
                 audio.pause(); 
                 audio.currentTime = 0;
@@ -64,43 +65,39 @@
             
             initBtn.classList.add('hidden');
             manualZone.classList.remove('hidden');
-            status.innerText = "Система готова. Идите к объекту или нажмите кнопку ниже.";
+            status.innerText = "Система готова! Подойдите к объекту или нажмите кнопку ниже.";
             
-            startTracking();
-        }
-
-        function startTracking() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(updateLocation, (err) => {
-                    distText.innerText = "GPS поиск...";
+                    distText.innerText = "Спутник: поиск сигнала...";
                 }, { enableHighAccuracy: true });
             }
         }
 
         function updateLocation(pos) {
             const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, 44.4952, 34.1663);
-            distText.innerText = "До памятника: " + Math.round(dist) + " м.";
-            // Автозапуск если подошли
-            if (dist < 40 && audio.paused && audio.currentTime === 0) playAudio();
+            distText.innerText = "Расстояние: " + Math.round(dist) + " м.";
+            
+            // Автозапуск в радиусе 40 метров
+            if (dist < 40 && audio.paused && audio.currentTime === 0) {
+                playAudio();
+            }
         }
 
         function playAudio() {
-            // Принудительный запуск
-            var playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    status.innerText = "Слушайте историю...";
-                    restartZone.classList.remove('hidden');
-                }).catch(error => {
-                    status.innerText = "Нажмите ещё раз для звука";
-                });
-            }
+            audio.play().then(() => {
+                status.innerText = "Слушайте историю: Площадь Ленина";
+                restartZone.classList.remove('hidden');
+            }).catch(error => {
+                status.innerText = "Ошибка: Файл point1.mp3 не найден в корне проекта";
+                console.error(error);
+            });
         }
 
         function restartAudio() {
             audio.currentTime = 0;
             audio.play();
-            status.innerText = "Начинаем сначала...";
+            status.innerText = "Слушаем сначала...";
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
