@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вперёд в прошлое</title>
+    <style>
+        body { background: #1a1a1a; color: #d4af37; text-align: center; font-family: 'Georgia', serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { border: 2px solid #d4af37; padding: 30px; border-radius: 20px; width: 90%; max-width: 360px; }
+        h1 { font-size: 24px; word-spacing: 5px; margin-bottom: 5px; }
+        .subtitle { font-size: 11px; letter-spacing: 2px; color: #aaa; text-transform: uppercase; margin-bottom: 25px; }
+        .btn { background: #d4af37; color: #1a1a1a; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 10px auto; }
+        .btn-main { width: 100px; height: 100px; font-size: 40px; display: flex; align-items: center; justify-content: center; }
+        .btn-restart { padding: 12px 24px; font-size: 14px; background: none; border: 1px solid #d4af37; color: #d4af37; display: block; width: 80%; }
+        .manual-zone { border-top: 1px solid #333; margin-top: 20px; padding-top: 20px; }
+        .btn-manual { background: #555; color: #fff; padding: 10px 20px; border-radius: 5px; font-size: 13px; border: none; cursor: pointer; }
+        #status { font-size: 16px; margin: 15px 0; min-height: 45px; }
+        #distance { font-size: 12px; color: #888; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Вперёд в прошлое</h1>
+        <p class="subtitle">Ялтинский променад</p>
+        <div id="status">Нажмите ▶ для запуска гида</div>
+        <button id="init-btn" class="btn btn-main" onclick="initApp()">▶</button>
+        <div id="restart-zone" class="hidden">
+            <button class="btn btn-restart" onclick="restartAudio()">🔄 Начать заново</button>
+        </div>
+        <div id="distance">Ожидание GPS...</div>
+        <div id="manual-zone" class="manual-zone hidden">
+            <button class="btn-manual" onclick="playAudio()">Включить звук вручную</button>
+        </div>
+    </div>
+    <audio id="track"><source src="audio/point1.mp3" type="audio/mpeg"></audio>
+    <script>
+        const audio = document.getElementById('track');
+        const status = document.getElementById('status');
+        const distText = document.getElementById('distance');
+        function initApp() {
+            audio.play().then(() => { audio.pause(); }).catch(e => console.log(e));
+            document.getElementById('init-btn').classList.add('hidden');
+            document.getElementById('manual-zone').classList.remove('hidden');
+            status.innerText = "Радар включен. Подойдите к памятнику Ленина.";
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updateLocation, (err) => {
+                    distText.innerText = "Поиск спутников...";
+                }, { enableHighAccuracy: true });
+            }
+        }
+        function updateLocation(pos) {
+            const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, 44.4952, 34.1663);
+            distText.innerText = "До цели: " + Math.round(dist) + " м.";
+            if (dist < 40 && audio.paused && audio.currentTime === 0) playAudio();
+        }
+        function playAudio() {
+            audio.play();
+            status.innerText = "Слушайте: Площадь Ленина";
+            document.getElementById('restart-zone').classList.remove('hidden');
+        }
+        function restartAudio() {
+            audio.currentTime = 0;
+            audio.play();
+            status.innerText = "История начата заново";
+        }
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+    </script>
+</body>
+</html>
